@@ -1,0 +1,847 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ShiftTrack Café - Multi-Job Hours & Salary Reconciliation</title>
+  <meta name="description" content="Track your work hours, overtime, and salary payouts across Cafe Oliv and Cafe Click. Monitor monthly hours, subtract paid hours, and track unpaid balances.">
+  
+  <!-- Google Fonts: Outfit & Plus Jakarta Sans -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <link rel="stylesheet" href="style.css">
+  <link rel="icon" type="image/jpeg" href="logo.jpg">
+  
+  <!-- PWA & Mobile App Support -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#10b981">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="ShiftTrack">
+  <link rel="apple-touch-icon" href="icon-192.png">
+</head>
+<body data-theme="dark">
+  <div class="app-wrapper">
+    <!-- Top Header -->
+    <header class="main-header">
+      <div class="header-left">
+        <div class="logo-box">
+          <img src="logo.jpg" alt="ShiftTrack Café Logo" class="app-logo">
+        </div>
+        <div class="title-meta">
+          <h1 class="brand-title">ShiftTrack <span class="highlight">Café</span></h1>
+          <p class="brand-subtitle">Dual Job Work Hours, Overtime & Salary Reconciliation</p>
+        </div>
+      </div>
+
+      <div class="header-actions">
+        <!-- Clean Period Selector & Settle Button -->
+        <div class="period-control-bar">
+          <div class="period-select-wrap">
+            <span class="selector-label">View:</span>
+            <select id="period-view-select" class="period-view-select" title="Choose which period's shifts to view">
+              <option value="current" selected>🔥 Current Ongoing Hours (Unsettled)</option>
+              <!-- Past closed periods will be populated here -->
+              <option value="all">📋 All Shifts History</option>
+            </select>
+          </div>
+
+          <!-- Prominent Month End / Settle Salary Button -->
+          <button type="button" id="btn-open-settle" class="settle-action-pill" title="Record your salary payment and close this month">
+            <span class="btn-icon">💰</span>
+            <span>Month End / Settle Salary</span>
+          </button>
+        </div>
+
+        <!-- Settings Button -->
+        <button id="btn-open-settings" class="action-pill-btn" title="Configure Hourly Rates & Phone Sync" aria-label="Settings">
+          <span class="btn-icon">⚙️</span>
+          <span>Rates & Sync</span>
+        </button>
+
+        <!-- Install App Button (Visible on mobile/installable browsers) -->
+        <button id="btn-install-app" class="action-pill-btn hidden" title="Install ShiftTrack on your phone" aria-label="Install App">
+          <span class="btn-icon">📲</span>
+          <span>Install App</span>
+        </button>
+
+        <!-- Theme Toggle -->
+        <button id="btn-toggle-theme" class="icon-circle-btn" title="Toggle Light/Dark Theme" aria-label="Toggle Theme">
+          <span id="theme-icon">☀️</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Top KPI Summary Cards -->
+    <section class="kpi-banner">
+      <!-- Total Hours Card -->
+      <div class="kpi-card card-glow-primary">
+        <div class="kpi-top">
+          <span class="kpi-label" id="kpi-period-label">TOTAL WORKED IN THIS PERIOD</span>
+          <span class="kpi-icon">⏱️</span>
+        </div>
+        <div class="kpi-main-val" id="kpi-total-hours">0.0 <span class="unit">hrs</span></div>
+        <div class="kpi-sub-breakdown">
+          <span class="sub-item" title="Regular Hours">Standard: <strong id="kpi-regular-hours">0.0h</strong></span>
+          <span class="sub-separator">•</span>
+          <span class="sub-item ot-highlight" title="Overtime Hours">Overtime: <strong id="kpi-ot-hours">0.0h</strong></span>
+        </div>
+      </div>
+
+      <!-- Paid vs Unpaid Hours Card -->
+      <div class="kpi-card card-glow-warning">
+        <div class="kpi-top">
+          <span class="kpi-label">PAID VS UNPAID HOURS</span>
+          <span class="kpi-icon">📊</span>
+        </div>
+        <div class="kpi-main-val text-warning" id="kpi-unpaid-hours">0.0 <span class="unit">hrs unpaid</span></div>
+        <div class="kpi-sub-breakdown">
+          <span class="sub-item">Paid: <strong id="kpi-paid-hours">0.0h</strong></span>
+          <span class="sub-separator">/</span>
+          <span class="sub-item">Remaining: <strong id="kpi-remaining-hours" class="text-warning">0.0h</strong></span>
+        </div>
+      </div>
+
+      <!-- Earnings & Payout Card -->
+      <div class="kpi-card card-glow-success">
+        <div class="kpi-top">
+          <span class="kpi-label">SALARY RECONCILIATION</span>
+          <span class="kpi-icon">💰</span>
+        </div>
+        <div class="kpi-main-val text-success" id="kpi-earned-total">€0.00</div>
+        <div class="kpi-sub-breakdown">
+          <span class="sub-item">Received: <strong id="kpi-received-total">€0.00</strong></span>
+          <span class="sub-separator">•</span>
+          <span class="sub-item" id="kpi-balance-wrapper">Balance: <strong id="kpi-balance-total" class="text-success">€0.00</strong></span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Workplace Breakdown Cards (Cafe Oliv vs Cafe Click) -->
+    <section class="venues-grid">
+      <!-- Cafe Oliv Card -->
+      <div class="venue-card venue-oliv">
+        <div class="venue-header">
+          <div class="venue-title-wrap">
+            <span class="venue-emoji">🫒</span>
+            <div>
+              <h3 class="venue-name">Cafe Oliv</h3>
+              <p class="venue-rates-label" id="oliv-rate-label">Rate: €13.90/hr • OT: €20.85/hr</p>
+            </div>
+          </div>
+          <span class="venue-badge badge-oliv">Active</span>
+        </div>
+
+        <div class="venue-stats-grid">
+          <div class="v-stat">
+            <span class="v-label">Total Hours</span>
+            <span class="v-val" id="oliv-total-hrs">0.0h</span>
+          </div>
+          <div class="v-stat">
+            <span class="v-label">Standard</span>
+            <span class="v-val" id="oliv-reg-hrs">0.0h</span>
+          </div>
+          <div class="v-stat">
+            <span class="v-label">Overtime (OT)</span>
+            <span class="v-val text-ot" id="oliv-ot-hrs">0.0h</span>
+          </div>
+          <div class="v-stat">
+            <span class="v-label">Hours Paid</span>
+            <span class="v-val text-success" id="oliv-paid-hrs">0.0h</span>
+          </div>
+          <div class="v-stat">
+            <span class="v-label">Unpaid Hours</span>
+            <span class="v-val text-warning" id="oliv-unpaid-hrs">0.0h</span>
+          </div>
+          <div class="v-stat">
+            <span class="v-label">Pending Pay</span>
+            <span class="v-val text-warning" id="oliv-pending-pay">€0.00</span>
+          </div>
+        </div>
+
+        <div class="venue-footer">
+          <span>Earned: <strong id="oliv-earned-pay">€0.00</strong></span>
+          <span>Paid Out: <strong id="oliv-received-pay" class="text-success">€0.00</strong></span>
+        </div>
+      </div>
+
+      <!-- Cafe Click Card -->
+      <div class="venue-card venue-click">
+        <div class="venue-header">
+          <div class="venue-title-wrap">
+            <span class="venue-emoji">☕</span>
+            <div>
+              <h3 class="venue-name">Cafe Click</h3>
+              <p class="venue-rates-label" id="click-rate-label">Rate: €14.00/hr • OT: €21.00/hr</p>
+            </div>
+          </div>
+          <span class="venue-badge badge-click">Active</span>
+        </div>
+
+        <div class="venue-stats-grid">
+          <div class="v-stat">
+            <span class="v-label">Total Hours</span>
+            <span class="v-val" id="click-total-hrs">0.0h</span>
+          </div>
+          <div class="v-stat">
+            <span class="v-label">Standard</span>
+            <span class="v-val" id="click-reg-hrs">0.0h</span>
+          </div>
+          <div class="v-stat">
+            <span class="v-label">Overtime (OT)</span>
+            <span class="v-val text-ot" id="click-ot-hrs">0.0h</span>
+          </div>
+          <div class="v-stat">
+            <span class="v-label">Hours Paid</span>
+            <span class="v-val text-success" id="click-paid-hrs">0.0h</span>
+          </div>
+          <div class="v-stat">
+            <span class="v-label">Unpaid Hours</span>
+            <span class="v-val text-warning" id="click-unpaid-hrs">0.0h</span>
+          </div>
+          <div class="v-stat">
+            <span class="v-label">Pending Pay</span>
+            <span class="v-val text-warning" id="click-pending-pay">€0.00</span>
+          </div>
+        </div>
+
+        <div class="venue-footer">
+          <span>Earned: <strong id="click-earned-pay">€0.00</strong></span>
+          <span>Paid Out: <strong id="click-received-pay" class="text-success">€0.00</strong></span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Navigation Sub-Tabs -->
+    <nav class="content-tabs">
+      <button class="nav-tab active" data-tab="shifts" id="tab-btn-shifts">
+        <span>🕒 Shifts & Log Hours</span>
+      </button>
+      <button class="nav-tab" data-tab="payments" id="tab-btn-payments">
+        <span>💵 Paid Section (Salary Receipts)</span>
+        <span class="tab-badge" id="payments-badge">0</span>
+      </button>
+      <button class="nav-tab" data-tab="summary" id="tab-btn-summary">
+        <span>📑 Salary Period Statement</span>
+      </button>
+    </nav>
+
+    <!-- Main Content Area -->
+    <main class="tab-content-area">
+
+      <!-- ================= TAB 1: SHIFTS & LOG HOURS ================= -->
+      <section id="tab-shifts" class="tab-view active">
+        <div class="split-view-grid">
+          
+          <!-- Shift Logging Form -->
+          <div class="form-card">
+            <div class="form-header">
+              <div>
+                <h2>Log Working Shift 🕒</h2>
+                <p>Record your hours for Cafe Oliv or Cafe Click</p>
+              </div>
+              <button class="quick-demo-btn" id="btn-quick-example" title="Quickly autofill: Yesterday at Cafe Click 9am - 2pm (5 hrs)">
+                ⚡ Quick Example: Yesterday 9am–2pm
+              </button>
+            </div>
+
+            <form id="shift-form" class="shift-form">
+              <input type="hidden" id="shift-id" value="">
+
+              <!-- Workplace Selector -->
+              <div class="form-group">
+                <label class="form-label">Select Workplace:</label>
+                <div class="venue-radio-group">
+                  <label class="venue-radio-card oliv-card">
+                    <input type="radio" name="workplace" value="oliv" id="wp-oliv" checked>
+                    <div class="radio-content">
+                      <span class="radio-icon">🫒</span>
+                      <div class="radio-text">
+                        <span class="wp-title">Cafe Oliv</span>
+                        <span class="wp-subtitle" id="form-oliv-rate">€13.90/hr</span>
+                      </div>
+                    </div>
+                  </label>
+
+                  <label class="venue-radio-card click-card">
+                    <input type="radio" name="workplace" value="click" id="wp-click">
+                    <div class="radio-content">
+                      <span class="radio-icon">☕</span>
+                      <div class="radio-text">
+                        <span class="wp-title">Cafe Click</span>
+                        <span class="wp-subtitle" id="form-click-rate">€14/hr</span>
+                      </div>
+                    </div>
+                  </label>
+                </div>
+              </div>
+
+              <!-- Date Picker with Quick Selectors -->
+              <div class="form-group">
+                <div class="label-with-quick">
+                  <label for="shift-date" class="form-label">Shift Date:</label>
+                  <div class="date-shortcuts">
+                    <button type="button" class="date-chip" id="btn-date-today">Today</button>
+                    <button type="button" class="date-chip" id="btn-date-yesterday">Yesterday</button>
+                  </div>
+                </div>
+                <input type="date" id="shift-date" class="form-input" required>
+              </div>
+
+              <!-- Shift Timing Option (Start/End Time or Direct Duration) -->
+              <div class="timing-box">
+                <div class="timing-toggle-bar">
+                  <span class="timing-label">Shift Hours Mode:</span>
+                  <div class="mini-toggle">
+                    <button type="button" class="mini-btn active" id="btn-mode-clock">Clock In/Out</button>
+                    <button type="button" class="mini-btn" id="btn-mode-direct">Direct Hours</button>
+                  </div>
+                </div>
+
+                <!-- Clock Mode Inputs -->
+                <div id="clock-inputs-group" class="time-grid">
+                  <div class="form-group">
+                    <label for="shift-start-time" class="form-label">Start Time:</label>
+                    <input type="time" id="shift-start-time" class="form-input" value="09:00">
+                  </div>
+                  <div class="form-group">
+                    <label for="shift-end-time" class="form-label">End Time:</label>
+                    <input type="time" id="shift-end-time" class="form-input" value="14:00">
+                  </div>
+                  <div class="form-group">
+                    <label for="shift-break" class="form-label">Break (Mins):</label>
+                    <select id="shift-break" class="form-input">
+                      <option value="0">0 min (No break)</option>
+                      <option value="15">15 min</option>
+                      <option value="30">30 min</option>
+                      <option value="45">45 min</option>
+                      <option value="60">60 min (1 hr)</option>
+                    </select>
+                  </div>
+                </div>
+
+                <!-- Direct Hours Input -->
+                <div id="direct-inputs-group" class="form-group hidden">
+                  <label for="shift-direct-hours" class="form-label">Total Hours Worked:</label>
+                  <input type="number" id="shift-direct-hours" class="form-input" step="0.25" min="0.25" max="24" placeholder="e.g. 5.0">
+                </div>
+
+                <!-- Live Computed Duration Banner -->
+                <div class="calculated-duration-banner">
+                  <span class="calc-banner-label">Calculated Shift Duration:</span>
+                  <span class="calc-banner-val" id="computed-duration">5.0 hrs (5h 0m)</span>
+                </div>
+              </div>
+
+              <!-- Overtime & Standard Hours Breakdown -->
+              <div class="ot-control-box">
+                <div class="ot-top-row">
+                  <label class="checkbox-container">
+                    <input type="checkbox" id="shift-has-ot">
+                    <span class="checkmark"></span>
+                    <span class="cb-label">Contains Overtime (OT) Hours</span>
+                  </label>
+                  <button type="button" class="text-link-btn" id="btn-auto-split-ot" title="Split hours over 8 hrs automatically">
+                    Auto-split (>8h)
+                  </button>
+                </div>
+
+                <div id="ot-inputs-wrapper" class="ot-inputs-row hidden">
+                  <div class="form-group">
+                    <label for="shift-reg-hours" class="form-label">Standard Hours:</label>
+                    <input type="number" id="shift-reg-hours" class="form-input" step="0.25" min="0" max="24">
+                  </div>
+                  <div class="form-group">
+                    <label for="shift-ot-hours" class="form-label text-ot">Overtime Hours:</label>
+                    <input type="number" id="shift-ot-hours" class="form-input ot-input" step="0.25" min="0" max="24" value="0">
+                  </div>
+                </div>
+              </div>
+
+              <!-- Notes / Shift Role -->
+              <div class="form-group">
+                <label for="shift-note" class="form-label">Notes (Optional):</label>
+                <input type="text" id="shift-note" class="form-input" placeholder="e.g., Morning barista rush, kitchen closing...">
+              </div>
+
+              <!-- Form Buttons -->
+              <div class="form-actions-row">
+                <button type="submit" class="submit-btn" id="btn-save-shift">
+                  <span>💾 Save Working Shift</span>
+                </button>
+                <button type="button" class="cancel-btn hidden" id="btn-cancel-edit">
+                  Cancel Edit
+                </button>
+              </div>
+            </form>
+          </div>
+
+          <!-- Shifts History List & Filter -->
+          <div class="history-card">
+            <div class="table-header-bar">
+              <div class="th-left">
+                <h3>Logged Shifts (<span id="shifts-count">0</span>)</h3>
+                <p>History of hours for the selected month</p>
+              </div>
+              <div class="filter-group">
+                <select id="filter-venue" class="filter-select">
+                  <option value="all">All Workplaces</option>
+                  <option value="oliv">🫒 Cafe Oliv</option>
+                  <option value="click">☕ Cafe Click</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Empty State -->
+            <div class="empty-state hidden" id="shifts-empty">
+              <span class="empty-icon">📅</span>
+              <p>No shifts logged for this month yet.</p>
+              <small>Use the form on the left or the "Quick Example" button to add your first shift!</small>
+            </div>
+
+            <!-- Shifts Table -->
+            <div class="table-container" id="shifts-table-wrap">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Workplace</th>
+                    <th>Time / Duration</th>
+                    <th>Standard</th>
+                    <th>Overtime</th>
+                    <th>Est. Pay</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody id="shifts-tbody">
+                  <!-- Dynamically populated -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= TAB 2: PAID SECTION (SALARY PAYOUTS) ================= -->
+      <section id="tab-payments" class="tab-view">
+        <div class="split-view-grid">
+          
+          <!-- Month End Settlement Form Card -->
+          <div class="form-card">
+            <div class="form-header">
+              <div>
+                <h2>Month End / Settle Salary 💰</h2>
+                <p>Record your salary payout, close this period, and start counting fresh!</p>
+              </div>
+            </div>
+
+            <!-- Current Ongoing Shifts Summary -->
+            <div class="settle-summary-banner">
+              <div class="settle-banner-title">Current Ongoing Shifts Waiting for Payment:</div>
+              <div class="settle-banner-stats">
+                <span id="settle-card-shifts-count">0 shifts</span> • 
+                <strong id="settle-card-total-hrs">0.0 hrs</strong> worked 
+                (<span id="settle-card-earned">€0.00</span> earned)
+              </div>
+            </div>
+
+            <form id="settle-form" class="shift-form">
+              <!-- Period Name & Date -->
+              <div class="two-col-grid">
+                <div class="form-group">
+                  <label for="settle-title" class="form-label">Period Name / Title:</label>
+                  <input type="text" id="settle-title" class="form-input" placeholder="e.g. Aug 18 – Sep 19 Salary" required>
+                  <small class="input-hint">Name this pay period (e.g. Aug 18 – Sep 19)</small>
+                </div>
+                <div class="form-group">
+                  <label for="settle-date" class="form-label">Salary Received Date:</label>
+                  <input type="date" id="settle-date" class="form-input" required>
+                  <small class="input-hint">When you got paid (e.g. Sep 25)</small>
+                </div>
+              </div>
+
+              <!-- Restaurant Payouts -->
+              <div class="two-col-grid">
+                <!-- Cafe Oliv -->
+                <div class="venue-settle-card oliv-card">
+                  <div class="v-card-top">
+                    <span class="v-emoji">🫒</span>
+                    <div>
+                      <h4>Cafe Oliv</h4>
+                      <span class="v-sub" id="settle-oliv-summary">Worked: 0.0h (€0.00)</span>
+                    </div>
+                  </div>
+                  <div class="form-group">
+                    <label for="settle-oliv-hrs" class="form-label">Hours Paid:</label>
+                    <input type="number" id="settle-oliv-hrs" class="form-input" step="0.25" min="0" placeholder="0.0">
+                  </div>
+                  <div class="form-group">
+                    <label for="settle-oliv-money" class="form-label">Money Received (€):</label>
+                    <input type="number" id="settle-oliv-money" class="form-input" step="0.01" min="0" placeholder="0.00">
+                  </div>
+                </div>
+
+                <!-- Cafe Click -->
+                <div class="venue-settle-card click-card">
+                  <div class="v-card-top">
+                    <span class="v-emoji">☕</span>
+                    <div>
+                      <h4>Cafe Click</h4>
+                      <span class="v-sub" id="settle-click-summary">Worked: 0.0h (€0.00)</span>
+                    </div>
+                  </div>
+                  <div class="form-group">
+                    <label for="settle-click-hrs" class="form-label">Hours Paid:</label>
+                    <input type="number" id="settle-click-hrs" class="form-input" step="0.25" min="0" placeholder="0.0">
+                  </div>
+                  <div class="form-group">
+                    <label for="settle-click-money" class="form-label">Money Received (€):</label>
+                    <input type="number" id="settle-click-money" class="form-input" step="0.01" min="0" placeholder="0.00">
+                  </div>
+                </div>
+              </div>
+
+              <!-- Payment Method & Note -->
+              <div class="two-col-grid">
+                <div class="form-group">
+                  <label for="settle-method" class="form-label">Payment Method:</label>
+                  <select id="settle-method" class="form-input">
+                    <option value="Bank Transfer">Bank Transfer / Direct Deposit</option>
+                    <option value="Cash in Hand">Cash in Hand</option>
+                    <option value="Check">Check</option>
+                    <option value="Other">Other</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label for="settle-note" class="form-label">Payment Note (Optional):</label>
+                  <input type="text" id="settle-note" class="form-input" placeholder="e.g. Bank transfer ref #123">
+                </div>
+              </div>
+
+              <!-- Submit -->
+              <div class="form-actions-row">
+                <button type="submit" class="submit-btn btn-success" id="btn-save-settle">
+                  <span>✅ Close Month & Start Counting Next</span>
+                </button>
+              </div>
+            </form>
+          </div>
+
+          <!-- Closed Periods & Salary Receipts Ledger -->
+          <div class="history-card">
+            <div class="table-header-bar">
+              <div class="th-left">
+                <h3>Closed Salary Periods (<span id="settlements-count">0</span>)</h3>
+                <p>History of reconciled month-ends and paid salaries</p>
+              </div>
+            </div>
+
+            <!-- Empty State -->
+            <div class="empty-state hidden" id="settlements-empty">
+              <span class="empty-icon">💸</span>
+              <p>No closed salary periods yet.</p>
+              <small>When your salary arrives, use the form on the left to close the month and start counting fresh!</small>
+            </div>
+
+            <!-- Settlements Table -->
+            <div class="table-container" id="settlements-table-wrap">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Salary Date</th>
+                    <th>Period Name</th>
+                    <th>Cafe Oliv</th>
+                    <th>Cafe Click</th>
+                    <th>Total Paid</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody id="settlements-tbody">
+                  <!-- Dynamically populated -->
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Current Ongoing Status Banner -->
+            <div class="reconcile-summary-box" id="reconcile-summary-box">
+              <div class="rec-row">
+                <span class="rec-title">🫒 Cafe Oliv Ongoing:</span>
+                <span class="rec-val" id="rec-oliv-text">0.0h worked (€0.00 pending)</span>
+              </div>
+              <div class="rec-row">
+                <span class="rec-title">☕ Cafe Click Ongoing:</span>
+                <span class="rec-val" id="rec-click-text">0.0h worked (€0.00 pending)</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- ================= TAB 3: MONTHLY REPORT & TIMESHEET ================= -->
+      <section id="tab-summary" class="tab-view">
+        <div class="report-card">
+          <div class="report-header">
+            <div>
+              <h2 id="report-title-month">Monthly Timesheet & Payout Statement</h2>
+              <p>Detailed breakdown for your records or to show to your managers</p>
+            </div>
+            <div class="report-actions">
+              <button class="secondary-btn" id="btn-export-csv">
+                <span>📥 Export to CSV</span>
+              </button>
+              <button class="primary-pill-btn" id="btn-print-report">
+                <span>🖨️ Print / Save PDF</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Printable Statement View -->
+          <div class="printable-statement" id="printable-statement">
+            <div class="statement-banner">
+              <div class="statement-meta">
+                <h3>Work Shift & Payout Summary</h3>
+                <p>Period: <strong id="statement-period">September 2026</strong></p>
+              </div>
+              <div class="statement-brand">
+                <span class="badge-oliv">🫒 Cafe Oliv</span>
+                <span class="badge-click">☕ Cafe Click</span>
+              </div>
+            </div>
+
+            <!-- Grand Totals Table -->
+            <div class="statement-table-wrap">
+              <table class="statement-table">
+                <thead>
+                  <tr>
+                    <th>Workplace</th>
+                    <th>Regular Hours</th>
+                    <th>Overtime Hours</th>
+                    <th>Total Hours Worked</th>
+                    <th>Hours Paid</th>
+                    <th>Unpaid Hours</th>
+                    <th>Total Earned</th>
+                    <th>Paid Received</th>
+                    <th>Pending Balance</th>
+                  </tr>
+                </thead>
+                <tbody id="statement-summary-tbody">
+                  <!-- Generated by JS -->
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Detailed Shift Line Items -->
+            <div class="statement-shifts-section">
+              <h4>All Shift Logs for this Month</h4>
+              <table class="statement-table statement-detail-table">
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Venue</th>
+                    <th>Hours Worked</th>
+                    <th>Standard</th>
+                    <th>Overtime</th>
+                    <th>Rate Applied</th>
+                    <th>Est. Pay</th>
+                    <th>Notes</th>
+                  </tr>
+                </thead>
+                <tbody id="statement-shifts-tbody">
+                  <!-- Generated by JS -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Month End Settlement Modal -->
+    <div class="modal-backdrop hidden" id="modal-settle-backdrop">
+      <div class="modal-card modal-card-lg">
+        <div class="modal-header">
+          <div>
+            <h3>Month End & Salary Settlement 💰</h3>
+            <p>Close your ongoing working hours, record your salary payout, and start fresh!</p>
+          </div>
+          <button class="close-modal-btn" id="btn-close-settle">✕</button>
+        </div>
+        <div class="modal-body">
+          <!-- Current Period Unsettled Summary Banner -->
+          <div class="settle-summary-banner">
+            <div class="settle-banner-title">Current Ongoing Shifts Waiting for Payment:</div>
+            <div class="settle-banner-stats">
+              <span id="modal-settle-shifts-count">0 shifts</span> • 
+              <strong id="modal-settle-total-hrs">0.0 hrs</strong> total worked 
+              (<span id="modal-settle-earned">€0.00</span> earned)
+            </div>
+          </div>
+
+          <form id="modal-settle-form" class="shift-form">
+            <!-- Period Name & Settlement Date -->
+            <div class="two-col-grid">
+              <div class="form-group">
+                <label for="modal-settle-title" class="form-label">Period Name / Title:</label>
+                <input type="text" id="modal-settle-title" class="form-input" placeholder="e.g. Aug 18 – Sep 19 Salary" required>
+                <small class="input-hint">Name this pay period (e.g. Aug 18 – Sep 19)</small>
+              </div>
+              <div class="form-group">
+                <label for="modal-settle-date" class="form-label">Salary Received Date:</label>
+                <input type="date" id="modal-settle-date" class="form-input" required>
+                <small class="input-hint">When you got paid (e.g. Sep 25)</small>
+              </div>
+            </div>
+
+            <!-- Restaurant Payout Inputs Grid -->
+            <div class="two-col-grid">
+              <!-- Cafe Oliv -->
+              <div class="venue-settle-card oliv-card">
+                <div class="v-card-top">
+                  <span class="v-emoji">🫒</span>
+                  <div>
+                    <h4>Cafe Oliv</h4>
+                    <span class="v-sub" id="modal-settle-oliv-sub">Worked: 0.0h (€0.00)</span>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label for="modal-settle-oliv-hrs" class="form-label">Hours Paid:</label>
+                  <input type="number" id="modal-settle-oliv-hrs" class="form-input" step="0.25" min="0" placeholder="0.0">
+                </div>
+                <div class="form-group">
+                  <label for="modal-settle-oliv-money" class="form-label">Money Received (€):</label>
+                  <input type="number" id="modal-settle-oliv-money" class="form-input" step="0.01" min="0" placeholder="0.00">
+                </div>
+              </div>
+
+              <!-- Cafe Click -->
+              <div class="venue-settle-card click-card">
+                <div class="v-card-top">
+                  <span class="v-emoji">☕</span>
+                  <div>
+                    <h4>Cafe Click</h4>
+                    <span class="v-sub" id="modal-settle-click-sub">Worked: 0.0h (€0.00)</span>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label for="modal-settle-click-hrs" class="form-label">Hours Paid:</label>
+                  <input type="number" id="modal-settle-click-hrs" class="form-input" step="0.25" min="0" placeholder="0.0">
+                </div>
+                <div class="form-group">
+                  <label for="modal-settle-click-money" class="form-label">Money Received (€):</label>
+                  <input type="number" id="modal-settle-click-money" class="form-input" step="0.01" min="0" placeholder="0.00">
+                </div>
+              </div>
+            </div>
+
+            <!-- Payment Method & Note -->
+            <div class="two-col-grid">
+              <div class="form-group">
+                <label for="modal-settle-method" class="form-label">Payment Method:</label>
+                <select id="modal-settle-method" class="form-input">
+                  <option value="Bank Transfer">Bank Transfer / Direct Deposit</option>
+                  <option value="Cash in Hand">Cash in Hand</option>
+                  <option value="Check">Check</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="modal-settle-note" class="form-label">Payment Note (Optional):</label>
+                <input type="text" id="modal-settle-note" class="form-input" placeholder="e.g. Bank transfer ref #123">
+              </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="modal-footer" style="padding: 12px 0 0 0;">
+              <button type="button" class="cancel-btn" id="btn-cancel-modal-settle">Cancel</button>
+              <button type="submit" class="submit-btn btn-success" id="btn-confirm-modal-settle">
+                ✅ Close Month & Start Counting Next
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div class="modal-backdrop hidden" id="modal-settings-backdrop">
+      <div class="modal-card">
+        <div class="modal-header">
+          <h3>Hourly Rates & Preferences ⚙️</h3>
+          <button class="close-modal-btn" id="btn-close-settings">✕</button>
+        </div>
+        <div class="modal-body">
+          <!-- Currency -->
+          <div class="form-group">
+            <label for="setting-currency" class="form-label">Currency Symbol:</label>
+            <select id="setting-currency" class="form-input">
+              <option value="€" selected>€ (EUR - Euros)</option>
+              <option value="$">$ (USD / CAD / AUD)</option>
+              <option value="£">£ (GBP)</option>
+              <option value="₹">₹ (INR)</option>
+              <option value="¥">¥ (JPY / CNY)</option>
+              <option value="kr">kr (SEK / NOK)</option>
+            </select>
+          </div>
+
+          <!-- Cafe Oliv Settings -->
+          <div class="venue-settings-group oliv-border">
+            <h4>🫒 Cafe Oliv Rates</h4>
+            <div class="two-col-grid">
+              <div class="form-group">
+                <label for="setting-oliv-rate" class="form-label">Base Hourly Rate (€):</label>
+                <input type="number" id="setting-oliv-rate" class="form-input" step="0.05" min="1" value="13.90">
+              </div>
+              <div class="form-group">
+                <label for="setting-oliv-ot-rate" class="form-label">Overtime Rate (€/hr):</label>
+                <input type="number" id="setting-oliv-ot-rate" class="form-input" step="0.05" min="1" value="20.85">
+              </div>
+            </div>
+          </div>
+
+          <!-- Cafe Click Settings -->
+          <div class="venue-settings-group click-border">
+            <h4>☕ Cafe Click Rates</h4>
+            <div class="two-col-grid">
+              <div class="form-group">
+                <label for="setting-click-rate" class="form-label">Base Hourly Rate (€):</label>
+                <input type="number" id="setting-click-rate" class="form-input" step="0.05" min="1" value="14.00">
+              </div>
+              <div class="form-group">
+                <label for="setting-click-ot-rate" class="form-label">Overtime Rate (€/hr):</label>
+                <input type="number" id="setting-click-ot-rate" class="form-input" step="0.05" min="1" value="21.00">
+              </div>
+            </div>
+          </div>
+
+          <!-- Backup / Reset Data -->
+          <div class="data-manage-box">
+            <h4>Data Backup & Sync (Phone ↔ PC)</h4>
+            <p class="input-hint" style="margin-bottom: 8px;">Transfer your shift history between your phone and computer anytime:</p>
+            <div class="data-buttons-row">
+              <button type="button" class="secondary-btn" id="btn-backup-export">📤 Export Backup File (JSON)</button>
+              <button type="button" class="secondary-btn" id="btn-backup-import-trigger">📥 Import / Restore Backup</button>
+              <input type="file" id="backup-file-input" accept=".json" class="hidden">
+            </div>
+            <div class="data-buttons-row" style="margin-top: 10px;">
+              <button type="button" class="secondary-btn" id="btn-load-sample-data">Load Demo Sample Shifts</button>
+              <button type="button" class="danger-btn" id="btn-clear-all-data">Reset All Data</button>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="submit-btn" id="btn-save-settings">Save Settings</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div class="toast hidden" id="app-toast"></div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
