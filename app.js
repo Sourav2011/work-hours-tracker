@@ -1927,15 +1927,11 @@
             const localSyncTime = parseInt(localStorage.getItem(STORAGE_KEY_LAST_SYNC) || '0', 10);
             if (remote.updatedAt > localSyncTime) {
               if (Array.isArray(remote.shifts)) {
-                const existingMap = new Map(shifts.map(s => [s.id, s]));
-                remote.shifts.forEach(s => existingMap.set(s.id, s));
-                shifts = Array.from(existingMap.values());
+                shifts = remote.shifts;
                 localStorage.setItem(STORAGE_KEY_SHIFTS, JSON.stringify(shifts));
               }
               if (Array.isArray(remote.settlements)) {
-                const existingSetMap = new Map(settlements.map(st => [st.id, st]));
-                remote.settlements.forEach(st => existingSetMap.set(st.id, st));
-                settlements = Array.from(existingSetMap.values());
+                settlements = remote.settlements;
                 localStorage.setItem(STORAGE_KEY_SETTLEMENTS, JSON.stringify(settlements));
               }
               if (remote.settings) {
