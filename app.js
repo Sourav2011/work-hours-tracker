@@ -1890,7 +1890,7 @@
 
       let syncUid = localStorage.getItem(STORAGE_KEY_SYNC_UID);
       if (!syncUid) {
-        syncUid = 'user_' + Math.random().toString(36).substring(2, 12);
+        syncUid = 'main';
         localStorage.setItem(STORAGE_KEY_SYNC_UID, syncUid);
       }
 
