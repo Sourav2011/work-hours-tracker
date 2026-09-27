@@ -480,7 +480,20 @@
     btnInstallApp: document.getElementById('btn-install-app'),
     btnBackupExport: document.getElementById('btn-backup-export'),
     btnBackupImportTrigger: document.getElementById('btn-backup-import-trigger'),
-    backupFileInput: document.getElementById('backup-file-input')
+    backupFileInput: document.getElementById('backup-file-input'),
+
+    // Cloud Sync Elements
+    cloudSyncStatusBadge: document.getElementById('cloud-sync-status-badge'),
+    cloudSyncSetupBox: document.getElementById('cloud-sync-setup-box'),
+    cloudSyncActiveBox: document.getElementById('cloud-sync-active-box'),
+    firebaseConfigInput: document.getElementById('firebase-config-input'),
+    btnConnectCloud: document.getElementById('btn-connect-cloud'),
+    cloudSyncProjectName: document.getElementById('cloud-sync-project-name'),
+    cloudSyncPhoneLink: document.getElementById('cloud-sync-phone-link'),
+    btnCopyPhoneLink: document.getElementById('btn-copy-phone-link'),
+    btnForceCloudPush: document.getElementById('btn-force-cloud-push'),
+    btnForceCloudPull: document.getElementById('btn-force-cloud-pull'),
+    btnDisconnectCloud: document.getElementById('btn-disconnect-cloud')
   };
 
   // -------------------------------------------------------------------
@@ -1297,6 +1310,7 @@
     localStorage.setItem(STORAGE_KEY_SHIFTS, JSON.stringify(shifts));
     resetShiftForm();
     updateUI();
+    syncLocalToCloud();
   });
 
   function resetShiftForm() {
@@ -1369,6 +1383,7 @@
     shifts = shifts.filter(s => s.id !== id);
     localStorage.setItem(STORAGE_KEY_SHIFTS, JSON.stringify(shifts));
     updateUI();
+    syncLocalToCloud();
     showToast('Shift deleted.');
   }
 
@@ -1428,6 +1443,7 @@
 
     localStorage.setItem(STORAGE_KEY_SHIFTS, JSON.stringify(shifts));
     localStorage.setItem(STORAGE_KEY_SETTLEMENTS, JSON.stringify(settlements));
+    syncLocalToCloud();
 
     // Reset settle form inputs & autofill flags for the next period
     [
@@ -1514,6 +1530,7 @@
     settlements = settlements.filter(s => s.id !== id);
     localStorage.setItem(STORAGE_KEY_SHIFTS, JSON.stringify(shifts));
     localStorage.setItem(STORAGE_KEY_SETTLEMENTS, JSON.stringify(settlements));
+    syncLocalToCloud();
 
     activeView = 'current';
     updateUI();
@@ -1810,7 +1827,236 @@
   }
 
   // -------------------------------------------------------------------
-  // 15. INITIALIZATION
+  // 15. REAL-TIME CLOUD SYNC ENGINE (Firebase Firestore)
+  // -------------------------------------------------------------------
+  const STORAGE_KEY_FIREBASE_CFG = 'shifttrack_firebase_cfg_v3';
+  const STORAGE_KEY_SYNC_UID = 'shifttrack_sync_uid_v3';
+  const STORAGE_KEY_LAST_SYNC = 'shifttrack_last_sync_time';
+
+  let firestoreDb = null;
+  let firestoreUnsubscribe = null;
+  let isSyncingToCloud = false;
+
+  function parseFirebaseConfig(raw) {
+    if (!raw) return null;
+    try {
+      return JSON.parse(raw);
+    } catch (e) {
+      const cfg = {};
+      const keys = ['apiKey', 'authDomain', 'projectId', 'storageBucket', 'messagingSenderId', 'appId'];
+      keys.forEach(k => {
+        const match = raw.match(new RegExp(`${k}\\s*:\\s*["']([^"']+)["']`));
+        if (match) cfg[k] = match[1];
+      });
+      if (cfg.apiKey && cfg.projectId) return cfg;
+      return null;
+    }
+  }
+
+  function initCloudSync() {
+    // 1. Check if URL hash has cloud sync payload (from phone 1-tap link)
+    if (window.location.hash && window.location.hash.includes('cloud_sync=')) {
+      try {
+        const payloadStr = decodeURIComponent(window.location.hash.split('cloud_sync=')[1]);
+        const payload = JSON.parse(atob(payloadStr));
+        if (payload && payload.cfg && payload.uid) {
+          localStorage.setItem(STORAGE_KEY_FIREBASE_CFG, JSON.stringify(payload.cfg));
+          localStorage.setItem(STORAGE_KEY_SYNC_UID, payload.uid);
+          history.replaceState(null, '', window.location.pathname + window.location.search);
+          showToast('🎉 Connected to Cloud Sync via 1-Tap Link!');
+        }
+      } catch (err) {
+        console.warn('Could not parse cloud sync link:', err);
+      }
+    }
+
+    const savedCfgStr = localStorage.getItem(STORAGE_KEY_FIREBASE_CFG);
+    if (!savedCfgStr || typeof firebase === 'undefined') {
+      updateCloudSyncUI(false);
+      return;
+    }
+
+    try {
+      const cfg = JSON.parse(savedCfgStr);
+      if (!cfg.apiKey || !cfg.projectId) {
+        updateCloudSyncUI(false);
+        return;
+      }
+
+      if (!firebase.apps.length) {
+        firebase.initializeApp(cfg);
+      }
+      firestoreDb = firebase.firestore();
+
+      let syncUid = localStorage.getItem(STORAGE_KEY_SYNC_UID);
+      if (!syncUid) {
+        syncUid = 'user_' + Math.random().toString(36).substring(2, 12);
+        localStorage.setItem(STORAGE_KEY_SYNC_UID, syncUid);
+      }
+
+      updateCloudSyncUI(true, cfg.projectId, syncUid);
+
+      // Listen for real-time changes
+      if (firestoreUnsubscribe) firestoreUnsubscribe();
+      firestoreUnsubscribe = firestoreDb.collection('shifttrack_sync').doc(syncUid).onSnapshot((docSnapshot) => {
+        if (isSyncingToCloud) return;
+        if (docSnapshot.exists) {
+          const remote = docSnapshot.data();
+          if (remote && remote.updatedAt) {
+            const localSyncTime = parseInt(localStorage.getItem(STORAGE_KEY_LAST_SYNC) || '0', 10);
+            if (remote.updatedAt > localSyncTime) {
+              if (Array.isArray(remote.shifts)) {
+                const existingMap = new Map(shifts.map(s => [s.id, s]));
+                remote.shifts.forEach(s => existingMap.set(s.id, s));
+                shifts = Array.from(existingMap.values());
+                localStorage.setItem(STORAGE_KEY_SHIFTS, JSON.stringify(shifts));
+              }
+              if (Array.isArray(remote.settlements)) {
+                const existingSetMap = new Map(settlements.map(st => [st.id, st]));
+                remote.settlements.forEach(st => existingSetMap.set(st.id, st));
+                settlements = Array.from(existingSetMap.values());
+                localStorage.setItem(STORAGE_KEY_SETTLEMENTS, JSON.stringify(settlements));
+              }
+              if (remote.settings) {
+                settings = { ...settings, ...remote.settings };
+                localStorage.setItem(STORAGE_KEY_SETTINGS, JSON.stringify(settings));
+              }
+              localStorage.setItem(STORAGE_KEY_LAST_SYNC, remote.updatedAt.toString());
+              updateUI();
+              showToast('⚡ Live Sync: Synced with your other device!');
+            }
+          }
+        }
+      }, (err) => {
+        console.warn('Firestore snapshot listener error:', err);
+      });
+    } catch (err) {
+      console.error('Firebase init error:', err);
+      updateCloudSyncUI(false);
+    }
+  }
+
+  function syncLocalToCloud() {
+    if (!firestoreDb) return;
+    const syncUid = localStorage.getItem(STORAGE_KEY_SYNC_UID);
+    if (!syncUid) return;
+
+    const now = Date.now();
+    localStorage.setItem(STORAGE_KEY_LAST_SYNC, now.toString());
+    isSyncingToCloud = true;
+
+    firestoreDb.collection('shifttrack_sync').doc(syncUid).set({
+      shifts,
+      settlements,
+      settings,
+      updatedAt: now
+    }, { merge: true }).then(() => {
+      setTimeout(() => { isSyncingToCloud = false; }, 600);
+    }).catch(err => {
+      isSyncingToCloud = false;
+      console.warn('Cloud sync push error:', err);
+    });
+  }
+
+  function updateCloudSyncUI(isConnected, projectId = '', syncUid = '') {
+    if (!dom.cloudSyncStatusBadge) return;
+    if (isConnected) {
+      dom.cloudSyncStatusBadge.textContent = '🟢 Active';
+      dom.cloudSyncStatusBadge.className = 'cs-badge cs-badge-online';
+      dom.cloudSyncSetupBox.classList.add('hidden');
+      dom.cloudSyncActiveBox.classList.remove('hidden');
+      if (dom.cloudSyncProjectName) {
+        dom.cloudSyncProjectName.textContent = `Project: ${projectId} • ID: ${syncUid.substring(0, 8)}...`;
+      }
+      if (dom.cloudSyncPhoneLink) {
+        const savedCfg = JSON.parse(localStorage.getItem(STORAGE_KEY_FIREBASE_CFG) || '{}');
+        const payload = btoa(JSON.stringify({ cfg: savedCfg, uid: syncUid }));
+        const baseHref = window.location.origin + window.location.pathname;
+        dom.cloudSyncPhoneLink.value = `${baseHref}#cloud_sync=${encodeURIComponent(payload)}`;
+      }
+    } else {
+      dom.cloudSyncStatusBadge.textContent = 'Local Only';
+      dom.cloudSyncStatusBadge.className = 'cs-badge cs-badge-offline';
+      dom.cloudSyncSetupBox.classList.remove('hidden');
+      dom.cloudSyncActiveBox.classList.add('hidden');
+    }
+  }
+
+  // Bind Cloud Sync UI buttons
+  if (dom.btnConnectCloud) {
+    dom.btnConnectCloud.addEventListener('click', () => {
+      const raw = dom.firebaseConfigInput.value.trim();
+      const cfg = parseFirebaseConfig(raw);
+      if (!cfg || !cfg.apiKey || !cfg.projectId) {
+        alert('Please paste a valid Firebase configuration containing at least apiKey and projectId.');
+        return;
+      }
+      localStorage.setItem(STORAGE_KEY_FIREBASE_CFG, JSON.stringify(cfg));
+      initCloudSync();
+      syncLocalToCloud();
+      showToast('☁️ Real-Time Cloud Sync connected!');
+    });
+  }
+
+  if (dom.btnCopyPhoneLink) {
+    dom.btnCopyPhoneLink.addEventListener('click', () => {
+      if (!dom.cloudSyncPhoneLink.value) return;
+      navigator.clipboard.writeText(dom.cloudSyncPhoneLink.value).then(() => {
+        showToast('📋 Copied 1-Tap Phone Sync link to clipboard!');
+      }).catch(() => {
+        dom.cloudSyncPhoneLink.select();
+        document.execCommand('copy');
+        showToast('📋 Copied link!');
+      });
+    });
+  }
+
+  if (dom.btnForceCloudPush) {
+    dom.btnForceCloudPush.addEventListener('click', () => {
+      syncLocalToCloud();
+      showToast('☁️ Pushed all local shifts to Cloud!');
+    });
+  }
+
+  if (dom.btnForceCloudPull) {
+    dom.btnForceCloudPull.addEventListener('click', () => {
+      const syncUid = localStorage.getItem(STORAGE_KEY_SYNC_UID);
+      if (!firestoreDb || !syncUid) return;
+      firestoreDb.collection('shifttrack_sync').doc(syncUid).get().then(docSnapshot => {
+        if (docSnapshot.exists) {
+          const remote = docSnapshot.data();
+          if (remote) {
+            if (remote.shifts) shifts = remote.shifts;
+            if (remote.settlements) settlements = remote.settlements;
+            if (remote.settings) settings = { ...settings, ...remote.settings };
+            localStorage.setItem(STORAGE_KEY_SHIFTS, JSON.stringify(shifts));
+            localStorage.setItem(STORAGE_KEY_SETTLEMENTS, JSON.stringify(settlements));
+            localStorage.setItem(STORAGE_KEY_SETTINGS, JSON.stringify(settings));
+            updateUI();
+            showToast('📥 Pulled latest shifts from Cloud!');
+          }
+        } else {
+          showToast('No cloud data found yet. Pushing current shifts...');
+          syncLocalToCloud();
+        }
+      });
+    });
+  }
+
+  if (dom.btnDisconnectCloud) {
+    dom.btnDisconnectCloud.addEventListener('click', () => {
+      if (confirm('Disconnect Cloud Sync? Your local shifts will remain safe on this device.')) {
+        if (firestoreUnsubscribe) firestoreUnsubscribe();
+        localStorage.removeItem(STORAGE_KEY_FIREBASE_CFG);
+        localStorage.removeItem(STORAGE_KEY_SYNC_UID);
+        updateCloudSyncUI(false);
+        showToast('Cloud Sync disconnected.');
+      }
+    });
+  }
+
+  // -------------------------------------------------------------------
+  // 16. INITIALIZATION
   // -------------------------------------------------------------------
   function init() {
     applyTheme(theme);
@@ -1818,8 +2064,10 @@
     updateShiftDurationCalculation();
     setupMobileSubtabs();
     updateUI();
+    initCloudSync();
   }
 
   init();
 
 })();
+

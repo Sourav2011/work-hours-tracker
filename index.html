@@ -849,10 +849,65 @@
             </div>
           </div>
 
+          <!-- Automatic Cloud Real-Time Sync Card -->
+          <div class="data-manage-box cloud-sync-box">
+            <div class="cloud-sync-header">
+              <div class="cs-title-wrap">
+                <span class="cs-icon">☁️</span>
+                <div>
+                  <h4>Automatic Real-Time Cloud Sync</h4>
+                  <p class="input-hint">Keep shifts instantly synced between phone & PC in real time</p>
+                </div>
+              </div>
+              <span class="cs-badge cs-badge-offline" id="cloud-sync-status-badge">Local Only</span>
+            </div>
+
+            <!-- When Not Connected -->
+            <div id="cloud-sync-setup-box" class="cloud-sync-setup">
+              <p class="cs-instruction">
+                Connect your free Google Firebase database (100% free) so shifts entered on your phone instantly appear on your PC:
+              </p>
+              <div class="form-group" style="margin: 10px 0;">
+                <label for="firebase-config-input" class="form-label">Firebase Config (Paste JSON or config code):</label>
+                <textarea id="firebase-config-input" class="form-input" rows="3" placeholder='Paste your Firebase config here (from console.firebase.google.com)'></textarea>
+                <small class="input-hint">Takes 2 minutes on <a href="https://console.firebase.google.com/" target="_blank" rel="noopener" style="color:var(--brand-primary); text-decoration: underline;">console.firebase.google.com</a> (Free Google account)</small>
+              </div>
+              <button type="button" class="submit-btn btn-success" id="btn-connect-cloud" style="width: 100%;">
+                <span>🚀 Connect & Start Cloud Sync</span>
+              </button>
+            </div>
+
+            <!-- When Connected -->
+            <div id="cloud-sync-active-box" class="cloud-sync-active hidden">
+              <div class="cs-connected-banner">
+                <span class="cs-live-dot"></span>
+                <div>
+                  <strong style="color: var(--color-success);">Real-Time Cloud Sync Active! 🌟</strong>
+                  <div class="input-hint" id="cloud-sync-project-name">Connected to Google Firebase</div>
+                </div>
+              </div>
+
+              <div class="cs-phone-link-box" style="margin: 12px 0;">
+                <label class="form-label">📲 1-Tap Sync Link for Your Phone:</label>
+                <p class="input-hint" style="margin-bottom: 6px;">Send this link to your phone (WhatsApp/Email). When opened on your phone, it connects to sync automatically with zero typing:</p>
+                <div class="link-copy-group" style="display: flex; gap: 8px;">
+                  <input type="text" id="cloud-sync-phone-link" class="form-input" readonly style="font-size: 11px;">
+                  <button type="button" class="action-pill-btn" id="btn-copy-phone-link" style="white-space: nowrap;">📋 Copy Link</button>
+                </div>
+              </div>
+
+              <div class="data-buttons-row" style="margin-top: 8px;">
+                <button type="button" class="secondary-btn" id="btn-force-cloud-push">☁️ Push to Cloud</button>
+                <button type="button" class="secondary-btn" id="btn-force-cloud-pull">📥 Pull from Cloud</button>
+                <button type="button" class="danger-btn" id="btn-disconnect-cloud">Disconnect Sync</button>
+              </div>
+            </div>
+          </div>
+
           <!-- Backup / Reset Data -->
           <div class="data-manage-box">
-            <h4>Data Backup & Sync (Phone ↔ PC)</h4>
-            <p class="input-hint" style="margin-bottom: 8px;">Transfer your shift history between your phone and computer anytime:</p>
+            <h4>Data Backup & Sync (Manual JSON File)</h4>
+            <p class="input-hint" style="margin-bottom: 8px;">Transfer a file backup between your phone and computer:</p>
             <div class="data-buttons-row">
               <button type="button" class="secondary-btn" id="btn-backup-export">📤 Export Backup File (JSON)</button>
               <button type="button" class="secondary-btn" id="btn-backup-import-trigger">📥 Import / Restore Backup</button>
@@ -874,6 +929,9 @@
     <div class="toast hidden" id="app-toast"></div>
   </div>
 
+  <!-- Google Firebase SDK for Real-Time Cloud Sync -->
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
   <script src="app.js"></script>
 </body>
 </html>
