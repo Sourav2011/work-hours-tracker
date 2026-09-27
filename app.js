@@ -1905,12 +1905,17 @@
       firestoreDb = firebase.firestore();
 
       let syncUid = localStorage.getItem(STORAGE_KEY_SYNC_UID);
-      if (!syncUid) {
+      let migratedFromUser = false;
+      if (!syncUid || syncUid.startsWith('user_')) {
         syncUid = 'main';
         localStorage.setItem(STORAGE_KEY_SYNC_UID, syncUid);
+        migratedFromUser = true;
       }
 
       updateCloudSyncUI(true, cfg.projectId, syncUid);
+      if (migratedFromUser && shifts && shifts.length > 0) {
+        syncLocalToCloud();
+      }
 
       // Listen for real-time changes
       if (firestoreUnsubscribe) firestoreUnsubscribe();
