@@ -399,6 +399,14 @@
     shiftsEmpty: document.getElementById('shifts-empty'),
     shiftsTableWrap: document.getElementById('shifts-table-wrap'),
     shiftsTbody: document.getElementById('shifts-tbody'),
+    shiftsCardsWrap: document.getElementById('shifts-cards-wrap'),
+
+    // Tab 1 Mobile Elements
+    btnTab1Form: document.getElementById('btn-tab1-form'),
+    btnTab1List: document.getElementById('btn-tab1-list'),
+    tab1BadgeCount: document.getElementById('tab1-badge-count'),
+    tab1FormCard: document.getElementById('tab1-form-card'),
+    tab1HistoryCard: document.getElementById('tab1-history-card'),
 
     // Tab 2 Settle Form & Ledger
     settleForm: document.getElementById('settle-form'),
@@ -419,8 +427,16 @@
     settlementsEmpty: document.getElementById('settlements-empty'),
     settlementsTableWrap: document.getElementById('settlements-table-wrap'),
     settlementsTbody: document.getElementById('settlements-tbody'),
+    settlementsCardsWrap: document.getElementById('settlements-cards-wrap'),
     recOlivText: document.getElementById('rec-oliv-text'),
     recClickText: document.getElementById('rec-click-text'),
+
+    // Tab 2 Mobile Elements
+    btnTab2Settle: document.getElementById('btn-tab2-settle'),
+    btnTab2Ledger: document.getElementById('btn-tab2-ledger'),
+    tab2BadgeCount: document.getElementById('tab2-badge-count'),
+    tab2FormCard: document.getElementById('tab2-form-card'),
+    tab2HistoryCard: document.getElementById('tab2-history-card'),
 
     // Settle Modal
     modalSettleBackdrop: document.getElementById('modal-settle-backdrop'),
@@ -746,25 +762,29 @@
     list.sort((a, b) => b.date.localeCompare(a.date));
 
     dom.shiftsCount.textContent = list.length;
+    if (dom.tab1BadgeCount) dom.tab1BadgeCount.textContent = list.length;
     dom.shiftsTbody.innerHTML = '';
+    if (dom.shiftsCardsWrap) dom.shiftsCardsWrap.innerHTML = '';
 
     if (list.length === 0) {
       dom.shiftsEmpty.classList.remove('hidden');
       dom.shiftsTableWrap.classList.add('hidden');
+      if (dom.shiftsCardsWrap) dom.shiftsCardsWrap.classList.add('hidden');
       return;
     }
     dom.shiftsEmpty.classList.add('hidden');
     dom.shiftsTableWrap.classList.remove('hidden');
+    if (dom.shiftsCardsWrap) dom.shiftsCardsWrap.classList.remove('hidden');
 
     list.forEach(shift => {
       const v = settings.venues[shift.workplace] || { name: shift.workplace, emoji: '☕' };
       const isClick = shift.workplace === 'click';
-      const tr = document.createElement('tr');
-
       const timeSpan = shift.startTime && shift.endTime ? `${shift.startTime} – ${shift.endTime}` : 'Direct';
       const otText = shift.otHours > 0 ? `<span class="ot-badge">+${shift.otHours.toFixed(1)}h OT</span>` : '<span class="text-sub">0h</span>';
       const statusBadge = shift.settled ? `<span class="venue-badge badge-click" style="font-size:10px;">Paid</span>` : `<span class="venue-badge" style="background:rgba(245,158,11,0.2); color:#f59e0b; font-size:10px;">Ongoing</span>`;
 
+      // 1. Desktop Table Row
+      const tr = document.createElement('tr');
       tr.innerHTML = `
         <td>
           <strong>${formatDateDisplay(shift.date)}</strong>
@@ -788,14 +808,52 @@
           <button class="action-icon-btn delete-shift-btn" data-id="${shift.id}" title="Delete Shift">🗑️</button>
         </td>
       `;
-
       dom.shiftsTbody.appendChild(tr);
+
+      // 2. Mobile Shift Card (100% visible on phones!)
+      if (dom.shiftsCardsWrap) {
+        const card = document.createElement('div');
+        card.className = 'mobile-shift-card';
+        card.innerHTML = `
+          <div class="msc-top">
+            <span class="venue-tag ${isClick ? 'tag-click' : 'tag-oliv'}">
+              ${v.emoji} ${v.name}
+            </span>
+            <span class="msc-date">${formatDateDisplay(shift.date)}</span>
+            ${statusBadge}
+          </div>
+
+          <div class="msc-details">
+            <div class="msc-stat">
+              <span class="msc-lbl">Duration</span>
+              <strong class="msc-val">${shift.totalHours.toFixed(1)} hrs</strong>
+              <small class="input-hint">${timeSpan} ${shift.breakMins > 0 ? `(${shift.breakMins}m)` : ''}</small>
+            </div>
+            <div class="msc-stat">
+              <span class="msc-lbl">Standard / OT</span>
+              <span class="msc-val">${shift.regHours.toFixed(1)}h reg ${shift.otHours > 0 ? `<span class="ot-badge">+${shift.otHours.toFixed(1)}h</span>` : ''}</span>
+            </div>
+            <div class="msc-stat">
+              <span class="msc-lbl">Est. Pay</span>
+              <strong class="msc-val text-success">${formatMoney(shift.estimatedPay)}</strong>
+            </div>
+          </div>
+
+          ${shift.note ? `<div class="msc-note">📝 ${shift.note}</div>` : ''}
+
+          <div class="msc-footer">
+            <button class="action-pill-btn edit-shift-btn" data-id="${shift.id}">✏️ Edit</button>
+            <button class="action-pill-btn delete-shift-btn btn-danger-soft" data-id="${shift.id}">🗑️ Delete</button>
+          </div>
+        `;
+        dom.shiftsCardsWrap.appendChild(card);
+      }
     });
 
-    dom.shiftsTbody.querySelectorAll('.delete-shift-btn').forEach(btn => {
+    document.querySelectorAll('.delete-shift-btn').forEach(btn => {
       btn.addEventListener('click', () => deleteShift(btn.dataset.id));
     });
-    dom.shiftsTbody.querySelectorAll('.edit-shift-btn').forEach(btn => {
+    document.querySelectorAll('.edit-shift-btn').forEach(btn => {
       btn.addEventListener('click', () => loadShiftForEdit(btn.dataset.id));
     });
   }
@@ -803,24 +861,29 @@
   // Render Settlements in Tab 2
   function renderSettlementsLedger() {
     dom.paymentsBadge.textContent = settlements.length;
+    if (dom.tab2BadgeCount) dom.tab2BadgeCount.textContent = settlements.length;
     dom.settlementsCount.textContent = settlements.length;
     dom.settlementsTbody.innerHTML = '';
+    if (dom.settlementsCardsWrap) dom.settlementsCardsWrap.innerHTML = '';
 
     if (settlements.length === 0) {
       dom.settlementsEmpty.classList.remove('hidden');
       dom.settlementsTableWrap.classList.add('hidden');
+      if (dom.settlementsCardsWrap) dom.settlementsCardsWrap.classList.add('hidden');
     } else {
       dom.settlementsEmpty.classList.add('hidden');
       dom.settlementsTableWrap.classList.remove('hidden');
+      if (dom.settlementsCardsWrap) dom.settlementsCardsWrap.classList.remove('hidden');
 
       settlements.forEach(st => {
-        const tr = document.createElement('tr');
         const oliv = st.venues ? st.venues.oliv : null;
         const click = st.venues ? st.venues.click : null;
 
         const olivText = oliv ? `<strong>${oliv.paidHours.toFixed(1)}h</strong> (${formatMoney(oliv.paidMoney)})` : '—';
         const clickText = click ? `<strong>${click.paidHours.toFixed(1)}h</strong> (${formatMoney(click.paidMoney)})` : '—';
 
+        // 1. Desktop Table Row
+        const tr = document.createElement('tr');
         tr.innerHTML = `
           <td><strong>${formatDateDisplay(st.date)}</strong></td>
           <td>
@@ -835,21 +898,62 @@
             <button class="action-icon-btn undo-settle-btn" data-id="${st.id}" title="Undo / Reopen Month (returns shifts to ongoing)">↩️</button>
           </td>
         `;
-
         dom.settlementsTbody.appendChild(tr);
+
+        // 2. Mobile Receipt Card (100% visible on mobile phones!)
+        if (dom.settlementsCardsWrap) {
+          const card = document.createElement('div');
+          card.className = 'settle-receipt-card';
+          card.innerHTML = `
+            <div class="rc-header">
+              <div class="rc-title-group">
+                <span class="rc-icon">🧾</span>
+                <div>
+                  <h4 class="rc-title">${st.title}</h4>
+                  <div class="rc-date">Paid on <strong>${formatDateDisplay(st.date)}</strong> • ${st.method || 'Bank Transfer'}</div>
+                </div>
+              </div>
+              <div class="rc-total-badge">
+                <span class="rc-total-label">Total Payout</span>
+                <span class="rc-total-val">${formatMoney(st.totalPaidMoney)}</span>
+              </div>
+            </div>
+
+            <div class="rc-venues-grid">
+              <div class="rc-venue-row oliv-border">
+                <span class="rc-v-name">🫒 Cafe Oliv</span>
+                <span class="rc-v-hrs">${oliv ? oliv.paidHours.toFixed(1) : '0.0'}h paid</span>
+                <strong class="rc-v-money text-success">${oliv ? formatMoney(oliv.paidMoney) : '€0.00'}</strong>
+              </div>
+              <div class="rc-venue-row click-border">
+                <span class="rc-v-name">☕ Cafe Click</span>
+                <span class="rc-v-hrs">${click ? click.paidHours.toFixed(1) : '0.0'}h paid</span>
+                <strong class="rc-v-money text-success">${click ? formatMoney(click.paidMoney) : '€0.00'}</strong>
+              </div>
+            </div>
+
+            ${st.note ? `<div class="rc-note">💬 ${st.note}</div>` : ''}
+
+            <div class="rc-actions">
+              <button class="action-pill-btn view-settle-btn" data-id="${st.id}">🔍 View Shifts in Period</button>
+              <button class="action-pill-btn undo-settle-btn btn-danger-soft" data-id="${st.id}">↩️ Reopen Period</button>
+            </div>
+          `;
+          dom.settlementsCardsWrap.appendChild(card);
+        }
       });
 
-      dom.settlementsTbody.querySelectorAll('.view-settle-btn').forEach(btn => {
+      document.querySelectorAll('.view-settle-btn').forEach(btn => {
         btn.addEventListener('click', () => {
           activeView = btn.dataset.id;
           updateUI();
-          // Switch to tab 1 (shifts)
           switchToTab('shifts');
+          if (dom.btnTab1List) dom.btnTab1List.click();
           showToast(`Viewing closed shifts for: ${settlements.find(s => s.id === activeView)?.title}`);
         });
       });
 
-      dom.settlementsTbody.querySelectorAll('.undo-settle-btn').forEach(btn => {
+      document.querySelectorAll('.undo-settle-btn').forEach(btn => {
         btn.addEventListener('click', () => undoSettlement(btn.dataset.id));
       });
     }
@@ -1663,12 +1767,56 @@
   }
 
   // -------------------------------------------------------------------
-  // 14. INITIALIZATION
+  // 14. MOBILE SUB-TAB TOGGLING
+  // -------------------------------------------------------------------
+  function setupMobileSubtabs() {
+    if (dom.btnTab1Form && dom.btnTab1List) {
+      dom.btnTab1Form.addEventListener('click', () => {
+        dom.btnTab1Form.classList.add('active');
+        dom.btnTab1List.classList.remove('active');
+        if (dom.tab1FormCard) dom.tab1FormCard.classList.remove('mobile-subtab-hidden');
+        if (dom.tab1HistoryCard) dom.tab1HistoryCard.classList.add('mobile-subtab-hidden');
+      });
+      dom.btnTab1List.addEventListener('click', () => {
+        dom.btnTab1List.classList.add('active');
+        dom.btnTab1Form.classList.remove('active');
+        if (dom.tab1HistoryCard) dom.tab1HistoryCard.classList.remove('mobile-subtab-hidden');
+        if (dom.tab1FormCard) dom.tab1FormCard.classList.add('mobile-subtab-hidden');
+      });
+    }
+
+    if (dom.btnTab2Settle && dom.btnTab2Ledger) {
+      dom.btnTab2Settle.addEventListener('click', () => {
+        dom.btnTab2Settle.classList.add('active');
+        dom.btnTab2Ledger.classList.remove('active');
+        if (dom.tab2FormCard) dom.tab2FormCard.classList.remove('mobile-subtab-hidden');
+        if (dom.tab2HistoryCard) dom.tab2HistoryCard.classList.add('mobile-subtab-hidden');
+      });
+      dom.btnTab2Ledger.addEventListener('click', () => {
+        dom.btnTab2Ledger.classList.add('active');
+        dom.btnTab2Settle.classList.remove('active');
+        if (dom.tab2HistoryCard) dom.tab2HistoryCard.classList.remove('mobile-subtab-hidden');
+        if (dom.tab2FormCard) dom.tab2FormCard.classList.add('mobile-subtab-hidden');
+      });
+    }
+
+    // Default mobile state on page load
+    if (window.innerWidth <= 680) {
+      if (dom.tab1FormCard) dom.tab1FormCard.classList.remove('mobile-subtab-hidden');
+      if (dom.tab1HistoryCard) dom.tab1HistoryCard.classList.add('mobile-subtab-hidden');
+      if (dom.tab2FormCard) dom.tab2FormCard.classList.remove('mobile-subtab-hidden');
+      if (dom.tab2HistoryCard) dom.tab2HistoryCard.classList.add('mobile-subtab-hidden');
+    }
+  }
+
+  // -------------------------------------------------------------------
+  // 15. INITIALIZATION
   // -------------------------------------------------------------------
   function init() {
     applyTheme(theme);
     dom.shiftDate.value = getTodayString();
     updateShiftDurationCalculation();
+    setupMobileSubtabs();
     updateUI();
   }
 

@@ -1148,6 +1148,250 @@ body {
   transform: scale(1.15);
 }
 
+.btn-danger-soft {
+  background: rgba(239, 68, 68, 0.12) !important;
+  color: #f87171 !important;
+  border-color: rgba(239, 68, 68, 0.3) !important;
+}
+
+.btn-danger-soft:hover {
+  background: #ef4444 !important;
+  color: #ffffff !important;
+}
+
+/* ================= MOBILE SHIFT & RECEIPT CARDS (Base Styles) ================= */
+.shifts-cards-wrap,
+.settlements-cards-wrap {
+  display: none;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.mobile-shift-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-card);
+  border-radius: var(--radius-md);
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.msc-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.msc-date {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.msc-details {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  background: var(--bg-input);
+  border-radius: var(--radius-sm);
+  padding: 10px;
+}
+
+.msc-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.msc-lbl {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+
+.msc-val {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.msc-note {
+  font-size: 12px;
+  color: var(--text-muted);
+  font-style: italic;
+  background: rgba(255, 255, 255, 0.03);
+  padding: 6px 10px;
+  border-radius: 6px;
+}
+
+.msc-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  border-top: 1px solid var(--border-card);
+  padding-top: 10px;
+}
+
+/* Salary Receipt Cards */
+.settle-receipt-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-card);
+  border-radius: var(--radius-lg);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+  position: relative;
+  overflow: hidden;
+}
+
+.settle-receipt-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--brand-oliv), var(--brand-click));
+}
+
+.rc-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.rc-title-group {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.rc-icon {
+  font-size: 24px;
+  background: rgba(16, 185, 129, 0.12);
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.rc-title {
+  font-family: var(--font-heading);
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--text-main);
+  line-height: 1.2;
+}
+
+.rc-date {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.rc-total-badge {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  background: rgba(16, 185, 129, 0.15);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  padding: 6px 10px;
+  border-radius: var(--radius-sm);
+  flex-shrink: 0;
+}
+
+.rc-total-label {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--brand-oliv);
+  text-transform: uppercase;
+}
+
+.rc-total-val {
+  font-family: var(--font-heading);
+  font-size: 17px;
+  font-weight: 800;
+  color: #ffffff;
+}
+
+.rc-venues-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: var(--bg-input);
+  border-radius: var(--radius-md);
+  padding: 10px 12px;
+}
+
+.rc-venue-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+  padding: 4px 6px;
+  border-radius: 6px;
+}
+
+.rc-venue-row.oliv-border {
+  border-left: 3px solid var(--brand-oliv);
+}
+
+.rc-venue-row.click-border {
+  border-left: 3px solid var(--brand-click);
+}
+
+.rc-v-name {
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.rc-v-hrs {
+  color: var(--text-muted);
+}
+
+.rc-v-money {
+  font-weight: 800;
+}
+
+.rc-note {
+  font-size: 12px;
+  color: var(--text-muted);
+  background: rgba(255, 255, 255, 0.03);
+  padding: 8px 12px;
+  border-radius: 6px;
+}
+
+.rc-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  border-top: 1px solid var(--border-card);
+  padding-top: 12px;
+}
+
+.rc-actions .action-pill-btn {
+  flex: 1;
+  justify-content: center;
+  font-size: 12px;
+  padding: 8px 12px;
+}
+
+.mobile-subtabs-bar {
+  display: none;
+}
+
 /* Empty State */
 .empty-state {
   text-align: center;
@@ -1824,8 +2068,58 @@ body {
     padding: 10px;
   }
 
-  /* Tables - Smooth Horizontal Scroll within Cards */
-  .table-container {
+  /* Mobile Subtabs Bar */
+  .mobile-subtabs-bar {
+    display: flex !important;
+    gap: 8px;
+    margin-bottom: 12px;
+    width: 100%;
+  }
+
+  .subtab-btn {
+    flex: 1;
+    padding: 10px 12px;
+    border-radius: var(--radius-md);
+    font-family: var(--font-body);
+    font-size: 13px;
+    font-weight: 700;
+    background: var(--bg-card);
+    border: 1px solid var(--border-card);
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: center;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  }
+
+  .subtab-btn.active {
+    background: var(--brand-primary);
+    color: #ffffff;
+    border-color: var(--brand-primary);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.35);
+  }
+
+  .mobile-subtab-hidden {
+    display: none !important;
+  }
+
+  /* On phone: Hide horizontal tables in Tab 1 & Tab 2, show 100% visible Mobile Cards */
+  #tab-shifts .table-container,
+  #tab-payments .table-container {
+    display: none !important;
+  }
+
+  .shifts-cards-wrap {
+    display: flex !important;
+  }
+
+  .settlements-cards-wrap {
+    display: flex !important;
+  }
+
+  /* Timesheet Statement Table in Tab 3 stays scrollable with clear prompt */
+  #tab-summary .table-container {
+    display: block !important;
     width: 100%;
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;

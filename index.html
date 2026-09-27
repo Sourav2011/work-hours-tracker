@@ -236,10 +236,20 @@
 
       <!-- ================= TAB 1: SHIFTS & LOG HOURS ================= -->
       <section id="tab-shifts" class="tab-view active">
-        <div class="split-view-grid">
+        <!-- Mobile Switcher for Tab 1 (Only on phone screens) -->
+        <div class="mobile-subtabs-bar">
+          <button type="button" class="subtab-btn active" id="btn-tab1-form">
+            <span>🕒 Log Working Shift</span>
+          </button>
+          <button type="button" class="subtab-btn" id="btn-tab1-list">
+            <span>📋 Shift History (<span id="tab1-badge-count">0</span>)</span>
+          </button>
+        </div>
+
+        <div class="split-view-grid" id="tab1-split-grid">
           
           <!-- Shift Logging Form -->
-          <div class="form-card">
+          <div class="form-card" id="tab1-form-card">
             <div class="form-header">
               <div>
                 <h2>Log Working Shift 🕒</h2>
@@ -404,7 +414,7 @@
               <small>Use the form on the left or the "Quick Example" button to add your first shift!</small>
             </div>
 
-            <!-- Shifts Table -->
+            <!-- Shifts Table (Desktop) -->
             <div class="table-container" id="shifts-table-wrap">
               <table class="data-table">
                 <thead>
@@ -423,16 +433,31 @@
                 </tbody>
               </table>
             </div>
+
+            <!-- Shifts Mobile Cards Wrap (Phone) -->
+            <div class="shifts-cards-wrap" id="shifts-cards-wrap">
+              <!-- Dynamically populated mobile shift cards -->
+            </div>
           </div>
         </div>
       </section>
 
       <!-- ================= TAB 2: PAID SECTION (SALARY PAYOUTS) ================= -->
       <section id="tab-payments" class="tab-view">
-        <div class="split-view-grid">
+        <!-- Mobile Switcher for Tab 2 (Only on phone screens) -->
+        <div class="mobile-subtabs-bar">
+          <button type="button" class="subtab-btn active" id="btn-tab2-settle">
+            <span>💰 Settle New Salary</span>
+          </button>
+          <button type="button" class="subtab-btn" id="btn-tab2-ledger">
+            <span>🧾 Past Salary Receipts (<span id="tab2-badge-count">0</span>)</span>
+          </button>
+        </div>
+
+        <div class="split-view-grid" id="tab2-split-grid">
           
           <!-- Month End Settlement Form Card -->
-          <div class="form-card">
+          <div class="form-card" id="tab2-form-card">
             <div class="form-header">
               <div>
                 <h2>Month End / Settle Salary 💰</h2>
@@ -533,7 +558,7 @@
           </div>
 
           <!-- Closed Periods & Salary Receipts Ledger -->
-          <div class="history-card">
+          <div class="history-card" id="tab2-history-card">
             <div class="table-header-bar">
               <div class="th-left">
                 <h3>Closed Salary Periods (<span id="settlements-count">0</span>)</h3>
@@ -548,7 +573,7 @@
               <small>When your salary arrives, use the form on the left to close the month and start counting fresh!</small>
             </div>
 
-            <!-- Settlements Table -->
+            <!-- Settlements Table (Desktop) -->
             <div class="table-container" id="settlements-table-wrap">
               <table class="data-table">
                 <thead>
@@ -565,6 +590,11 @@
                   <!-- Dynamically populated -->
                 </tbody>
               </table>
+            </div>
+
+            <!-- Settlements Mobile Receipt Cards (Phone) -->
+            <div class="settlements-cards-wrap" id="settlements-cards-wrap">
+              <!-- Dynamically populated mobile receipt cards -->
             </div>
 
             <!-- Current Ongoing Status Banner -->
