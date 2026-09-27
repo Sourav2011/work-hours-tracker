@@ -1853,6 +1853,15 @@
     }
   }
 
+  const DEFAULT_FIREBASE_CONFIG = {
+    apiKey: "AIzaSyBnurs8trk4VIslfuvwiFx4nJ3lhAlyQ_I",
+    authDomain: "my-cafe-shifts.firebaseapp.com",
+    projectId: "my-cafe-shifts",
+    storageBucket: "my-cafe-shifts.firebasestorage.app",
+    messagingSenderId: "624511068138",
+    appId: "1:624511068138:web:93cb6e6b172dcaee4cb493"
+  };
+
   function initCloudSync() {
     // 1. Check if URL hash has cloud sync payload (from phone 1-tap link)
     if (window.location.hash && window.location.hash.includes('cloud_sync=')) {
@@ -1870,14 +1879,21 @@
       }
     }
 
+    let cfg = null;
     const savedCfgStr = localStorage.getItem(STORAGE_KEY_FIREBASE_CFG);
-    if (!savedCfgStr || typeof firebase === 'undefined') {
+    if (savedCfgStr) {
+      try { cfg = JSON.parse(savedCfgStr); } catch (e) {}
+    }
+    if (!cfg || !cfg.apiKey) {
+      cfg = DEFAULT_FIREBASE_CONFIG;
+    }
+
+    if (typeof firebase === 'undefined') {
       updateCloudSyncUI(false);
       return;
     }
 
     try {
-      const cfg = JSON.parse(savedCfgStr);
       if (!cfg.apiKey || !cfg.projectId) {
         updateCloudSyncUI(false);
         return;
@@ -1925,6 +1941,11 @@
               updateUI();
               showToast('⚡ Live Sync: Synced with your other device!');
             }
+          }
+        } else {
+          // Document doesn't exist yet on cloud, push local data so cloud has it
+          if (shifts && shifts.length > 0) {
+            syncLocalToCloud();
           }
         }
       }, (err) => {

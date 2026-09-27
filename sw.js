@@ -1,4 +1,4 @@
-const CACHE_NAME = 'shifttrack-cafe-v2';
+const CACHE_NAME = 'shifttrack-cafe-v3';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
