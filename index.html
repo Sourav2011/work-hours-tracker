@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
   <title>ShiftTrack Café - Multi-Job Hours & Salary Reconciliation</title>
   <meta name="description" content="Track your work hours, overtime, and salary payouts across Cafe Oliv and Cafe Click. Monitor monthly hours, subtract paid hours, and track unpaid balances.">
   
@@ -56,22 +56,24 @@
           </button>
         </div>
 
-        <!-- Settings Button -->
-        <button id="btn-open-settings" class="action-pill-btn" title="Configure Hourly Rates & Phone Sync" aria-label="Settings">
-          <span class="btn-icon">⚙️</span>
-          <span>Rates & Sync</span>
-        </button>
+        <div class="header-quick-actions">
+          <!-- Settings Button -->
+          <button id="btn-open-settings" class="action-pill-btn" title="Configure Hourly Rates & Phone Sync" aria-label="Settings">
+            <span class="btn-icon">⚙️</span>
+            <span>Rates & Sync</span>
+          </button>
 
-        <!-- Install App Button (Visible on mobile/installable browsers) -->
-        <button id="btn-install-app" class="action-pill-btn hidden" title="Install ShiftTrack on your phone" aria-label="Install App">
-          <span class="btn-icon">📲</span>
-          <span>Install App</span>
-        </button>
+          <!-- Install App Button (Visible on mobile/installable browsers) -->
+          <button id="btn-install-app" class="action-pill-btn hidden" title="Install ShiftTrack on your phone" aria-label="Install App">
+            <span class="btn-icon">📲</span>
+            <span>Install</span>
+          </button>
 
-        <!-- Theme Toggle -->
-        <button id="btn-toggle-theme" class="icon-circle-btn" title="Toggle Light/Dark Theme" aria-label="Toggle Theme">
-          <span id="theme-icon">☀️</span>
-        </button>
+          <!-- Theme Toggle -->
+          <button id="btn-toggle-theme" class="icon-circle-btn" title="Toggle Light/Dark Theme" aria-label="Toggle Theme">
+            <span id="theme-icon">☀️</span>
+          </button>
+        </div>
       </div>
     </header>
 
